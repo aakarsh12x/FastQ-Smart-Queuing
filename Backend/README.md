@@ -40,8 +40,8 @@ A comprehensive Node.js backend for the fastQ queue management system.
    ```env
    PORT=5000
    NODE_ENV=development
-   # Use your MongoDB Atlas connection string here (replace <db_password>)
-   MONGODB_URI=mongodb+srv://aakarshshrey12:<db_password>@clustern.fzlg8zn.mongodb.net/fastq?retryWrites=true&w=majority&appName=ClusterN
+   # Use your MongoDB Atlas connection string here
+   MONGODB_URI=mongodb+srv://<username>:<password>@<cluster>.mongodb.net/<database>?retryWrites=true&w=majority
    JWT_SECRET=your-super-secret-jwt-key-here
    JWT_EXPIRE=7d
    FRONTEND_URL=http://localhost:3000

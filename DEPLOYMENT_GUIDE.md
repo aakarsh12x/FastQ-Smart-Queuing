@@ -37,7 +37,7 @@ npm install
 ```env
 PORT=5000
 NODE_ENV=development
-MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/fastq?retryWrites=true&w=majority
+MONGODB_URI=mongodb+srv://<username>:<password>@<cluster>.mongodb.net/<database>?retryWrites=true&w=majority
 JWT_SECRET=your_super_secret_jwt_key_here_change_in_production
 JWT_EXPIRE=7d
 FRONTEND_URL=http://localhost:3000
