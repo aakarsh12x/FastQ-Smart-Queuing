@@ -111,7 +111,9 @@ export function QueueAnimation({
                     relative flex flex-col items-center gap-2 p-3 rounded-lg border
                     ${colors.bg} ${colors.border} ${colors.text}
                     ${isUser ? 'ring-2 ring-blue-400/50' : ''}
-                    transition-colors duration-200
+                    transition-all duration-300 ease-in-out
+                    hover:scale-110 hover:shadow-lg hover:shadow-black/20
+                    cursor-pointer
                     min-w-[80px]
                   `}
                 >
