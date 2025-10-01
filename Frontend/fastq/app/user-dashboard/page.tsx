@@ -49,6 +49,7 @@ import {
   TrendingDown
 } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { QueueAnimation } from '@/components/ui/queue-animation';
 
 interface Queue {
   id: string;
@@ -274,44 +275,34 @@ export default function UserDashboard() {
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              className="relative overflow-hidden rounded-xl border border-blue-500/20 bg-gradient-to-br from-blue-500/10 to-blue-600/5 backdrop-blur-xl p-6"
+              className="space-y-4"
             >
-              <div className="absolute inset-0 bg-gradient-to-r from-blue-500/5 to-transparent" />
-              <div className="relative z-10">
-                <div className="flex items-center justify-between mb-6">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2.5 rounded-lg bg-blue-500/10 border border-blue-500/20">
-                      {getCategoryIcon(joinedQueue.category)}
-                    </div>
-                    <div>
-                      <h2 className="text-xl font-semibold text-white">{joinedQueue.name}</h2>
-                      <p className="text-sm text-gray-400 mt-0.5">Your current queue</p>
-                    </div>
+              {/* Queue Header with Leave Button */}
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="p-2.5 rounded-lg bg-blue-500/10 border border-blue-500/20">
+                    {getCategoryIcon(joinedQueue.category)}
                   </div>
-                  <button
-                    onClick={() => handleLeaveQueue(joinedQueue.id)}
-                    className="px-4 py-2 rounded-lg bg-gray-800/50 border border-gray-700/50 text-gray-300 hover:bg-gray-800 hover:border-gray-600 transition-all text-sm font-medium"
-                  >
-                    Leave Queue
-                  </button>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="rounded-lg bg-gray-900/30 border border-gray-800/50 p-4 text-center">
-                    <p className="text-xs text-gray-400 font-medium">Your Position</p>
-                    <p className="text-3xl font-semibold text-white mt-2">{userPosition !== null ? userPosition : '-'}</p>
-                  </div>
-                  <div className="rounded-lg bg-gray-900/30 border border-gray-800/50 p-4 text-center">
-                    <p className="text-xs text-gray-400 font-medium">People Ahead</p>
-                    <p className="text-3xl font-semibold text-white mt-2">{userPosition !== null ? userPosition - 1 : '-'}</p>
-                  </div>
-                  <div className="rounded-lg bg-gray-900/30 border border-gray-800/50 p-4 text-center">
-                    <p className="text-xs text-gray-400 font-medium">Est. Wait Time</p>
-                    <p className="text-3xl font-semibold text-white mt-2">{estimatedWaitTime || '-'}</p>
+                  <div>
+                    <h2 className="text-xl font-semibold text-white">{joinedQueue.name}</h2>
+                    <p className="text-sm text-gray-400 mt-0.5">Your current queue</p>
                   </div>
                 </div>
+                <button
+                  onClick={() => handleLeaveQueue(joinedQueue.id)}
+                  className="px-4 py-2 rounded-lg bg-red-500/20 border border-red-500/30 text-red-300 hover:bg-red-500/30 hover:border-red-500/50 transition-all text-sm font-medium"
+                >
+                  Leave Queue
+                </button>
               </div>
- 
+
+              {/* Interactive Queue Animation */}
+              <QueueAnimation
+                userPosition={userPosition || 1}
+                totalPeople={joinedQueue.currentUsers || 1}
+                estimatedWaitTime={estimatedWaitTime || '5 min'}
+                queueName={joinedQueue.name}
+              />
             </motion.div>
           ) : (
             <motion.div
