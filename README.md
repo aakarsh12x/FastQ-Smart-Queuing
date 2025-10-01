@@ -1,4 +1,7 @@
 # FastQ - Smart Queue Management System 🚀
+<img width="1896" height="893" alt="image" src="https://github.com/user-attachments/assets/c5d2539e-a70c-4aac-a0ae-67f8809beabc" />
+
+<img width="1897" height="911" alt="image" src="https://github.com/user-attachments/assets/fd1c25a3-7e92-4393-a44c-b8108ca62dc0" />
 
 ![FastQ Logo](https://img.shields.io/badge/FastQ-Smart%20Queuing-blue?style=for-the-badge)
 ![Status](https://img.shields.io/badge/Status-Active-success?style=for-the-badge)
