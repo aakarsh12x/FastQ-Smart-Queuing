@@ -13,7 +13,12 @@ router.get('/', authenticateToken, async (req, res) => {
   try {
     const { category, search, status = 'active' } = req.query;
     
-    let query = { status };
+    let query = {};
+    
+    // Only filter by status if it's not 'all'
+    if (status && status !== 'all') {
+      query.status = status;
+    }
     
     if (category && category !== 'all') {
       query.category = category;
