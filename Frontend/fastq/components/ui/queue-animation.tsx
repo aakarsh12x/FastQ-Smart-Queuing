@@ -89,7 +89,7 @@ export function QueueAnimation({
         </div>
 
         {/* People in queue - Horizontal layout */}
-        <div className="flex items-center justify-center gap-2 overflow-x-auto pb-4">
+        <div className="flex items-center justify-center gap-2 overflow-x-auto py-4 px-2">
           {visiblePeople.map((position, index) => {
             const isUser = position === displayPosition;
             const isFirst = position === 1;
