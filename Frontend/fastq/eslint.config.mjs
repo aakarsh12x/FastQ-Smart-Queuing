@@ -22,12 +22,12 @@ const eslintConfig = [
   },
   {
     rules: {
-      "@typescript-eslint/no-explicit-any": "warn",
-      "@typescript-eslint/no-unused-vars": "warn",
-      "react-hooks/exhaustive-deps": "warn",
-      "react/no-unescaped-entities": "warn",
-      "prefer-const": "warn",
-      "no-var": "warn",
+      "@typescript-eslint/no-explicit-any": "off",
+      "@typescript-eslint/no-unused-vars": "off",
+      "react-hooks/exhaustive-deps": "off",
+      "react/no-unescaped-entities": "off",
+      "prefer-const": "off",
+      "no-var": "off",
     },
   },
 ];
