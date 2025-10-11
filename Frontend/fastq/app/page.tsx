@@ -39,15 +39,33 @@ export default function Home() {
         return;
       }
 
-      // Register
+      // Register - Add validation
+      if (!fullName.trim()) {
+        setError('Please enter your full name');
+        return;
+      }
+      if (!email.trim()) {
+        setError('Please enter your email');
+        return;
+      }
+      if (password.length < 6) {
+        setError('Password must be at least 6 characters');
+        return;
+      }
+
+      console.log('Registration attempt:', { name: fullName.trim(), email: email.trim(), password, role: userType });
+
       const res = await fetch(`${API_URL}/auth/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: fullName || 'User', email, password, role: userType })
+        body: JSON.stringify({ name: fullName.trim(), email: email.trim(), password, role: userType })
       });
       const data = await res.json();
+      console.log('Registration response:', { status: res.status, data });
       if (!res.ok || !data.success) {
-        throw new Error(data?.error || 'Registration failed');
+        const errorMsg = data?.errors?.[0]?.msg || data?.error || 'Registration failed';
+        console.error('Registration error:', errorMsg);
+        throw new Error(errorMsg);
       }
       if (typeof window !== 'undefined') {
         localStorage.setItem('token', data.token);
@@ -199,6 +217,9 @@ export default function Home() {
                         placeholder="Enter your full name"
                         value={fullName}
                         onChange={(e) => setFullName(e.target.value)}
+                        required
+                        minLength={2}
+                        maxLength={50}
                         className="w-full pl-10 pr-4 py-2.5 border border-slate-700 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-transparent bg-slate-800 text-white transition-colors"
                       />
                     </div>
