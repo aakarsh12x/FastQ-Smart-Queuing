@@ -42,10 +42,13 @@ export function QueueAnimationDemo() {
       <h1 className="text-3xl font-bold text-white mb-6">Queue Animation Demo</h1>
       
       <QueueAnimation
-        userPosition={queueData.userPosition}
-        totalPeople={queueData.totalPeople}
-        estimatedWaitTime={queueData.estimatedWaitTime}
-        queueName={queueData.queueName}
+        queues={[{
+          queueId: 'demo-queue',
+          userPosition: queueData.userPosition,
+          totalPeople: queueData.totalPeople,
+          estimatedWaitTime: queueData.estimatedWaitTime,
+          queueName: queueData.queueName
+        }]}
       />
     </div>
   );
