@@ -3,7 +3,7 @@
   "buildCommand": "npm run build",
   "installCommand": "npm install",
   "env": {
-    "NEXT_PUBLIC_API_URL": "https://fastq-backend.onrender.com/api"
+    "NEXT_PUBLIC_API_URL": "https://YOUR-RENDER-BACKEND.onrender.com/api"
   }
 }
 
