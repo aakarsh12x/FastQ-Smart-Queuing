@@ -48,6 +48,7 @@ app.use(limiter);
 const allowedOrigins = [
   'http://localhost:3000',
   'https://fastq-7ktxyvp55-aakarsh12xs-projects.vercel.app',
+  'https://fastq-6c406c7r0-aakarsh12xs-projects.vercel.app',
   process.env.FRONTEND_URL
 ].filter(Boolean);
 
