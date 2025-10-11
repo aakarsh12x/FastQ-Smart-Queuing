@@ -26,37 +26,34 @@ async function reset() {
 }
 
 async function seed() {
-  // Users
-  const passwordHashAdmin = await bcrypt.hash('admin123', 10);
-  const passwordHashUser = await bcrypt.hash('password123', 10);
-
+  // Users - let the User model handle password hashing
   const admin = await User.create({
     name: 'Seed Admin',
     email: `admin_seed@fastq.dev`,
-    password: passwordHashAdmin,
+    password: 'admin123',
     role: 'admin',
   });
 
   const user = await User.create({
     name: 'Seed User',
     email: `user_seed@fastq.dev`,
-    password: passwordHashUser,
+    password: 'password123',
     role: 'user',
   });
 
   // Queues (idempotent upsert on name)
   const queueItems = [
-    { name: 'Main Canteen', location: 'Building A - Level 1', category: 'Food', status: 'active', averageWaitTime: 12 },
-    { name: 'Medical Center', location: 'Health Block - Reception', category: 'Medical', status: 'active', averageWaitTime: 25 },
-    { name: 'Admin Office', location: 'Building C - Level 2', category: 'Administrative', status: 'paused', averageWaitTime: 15 },
-    { name: 'Library Desk', location: 'Central Library - Ground', category: 'Education', status: 'active', averageWaitTime: 8 },
-    { name: 'Pharmacy', location: 'Health Block - Pharmacy Counter', category: 'Medical', status: 'active', averageWaitTime: 10 },
-    { name: 'IT Helpdesk', location: 'Building D - Level 1', category: 'Administrative', status: 'active', averageWaitTime: 14 },
+    { name: 'Main Canteen', location: 'Building A - Level 1', category: 'food', status: 'active', description: 'Fresh meals and daily specials' },
+    { name: 'Medical Center', location: 'Health Block - Reception', category: 'medical', status: 'active', description: 'General consultation and check-ups' },
+    { name: 'Admin Office', location: 'Building C - Level 2', category: 'admin', status: 'paused', description: 'Student services and documentation' },
+    { name: 'Library Desk', location: 'Central Library - Ground', category: 'education', status: 'active', description: 'Book reservations and research assistance' },
+    { name: 'Pharmacy', location: 'Health Block - Pharmacy Counter', category: 'medical', status: 'active', description: 'Prescription pickup and consultation' },
+    { name: 'IT Helpdesk', location: 'Building D - Level 1', category: 'admin', status: 'active', description: 'Technical support and assistance' },
   ];
 
   let upserted = 0;
   for (const q of queueItems) {
-    const res = await Queue.updateOne({ name: q.name }, { $setOnInsert: q }, { upsert: true });
+    const res = await Queue.updateOne({ name: q.name }, { $setOnInsert: { ...q, admin: admin._id } }, { upsert: true });
     if (res.upsertedCount && res.upsertedCount > 0) upserted += res.upsertedCount;
   }
 

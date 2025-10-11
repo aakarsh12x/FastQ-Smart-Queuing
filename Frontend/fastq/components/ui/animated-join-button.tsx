@@ -3,7 +3,7 @@ import React from "react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 
-interface AnimatedJoinButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+interface AnimatedJoinButtonProps extends Omit<React.ComponentProps<typeof motion.button>, "children"> {
   label?: string;
 }
 
@@ -21,8 +21,7 @@ export function AnimatedJoinButton({ label = "Join Queue", className, ...props }
         "transition-all duration-200",
         className
       )}
-      {...props}
-    >
+      {...props}>
       <span className="relative z-10">{label}</span>
       <span className="pointer-events-none absolute inset-0 rounded-lg bg-gradient-to-r from-white/10 to-transparent opacity-0 hover:opacity-100 transition-opacity" />
     </motion.button>

@@ -25,6 +25,7 @@ import {
   Activity,
 } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { useRouter } from 'next/navigation';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
 
@@ -50,6 +51,7 @@ interface QueueUser {
 }
 
 export default function Dashboard() {
+  const router = useRouter();
   const [queues, setQueues] = useState<Queue[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -73,9 +75,9 @@ export default function Dashboard() {
           name: q.name,
           location: q.location || '—',
           status: q.status || 'active',
-          totalUsers: q.totalUsers || 0,
-          waitingUsers: q.currentUsers?.length || q.waitingUsers || 0,
-          averageWaitTime: q.averageWaitTime || 0,
+          totalUsers: q.stats?.totalUsers || q.totalUsers || 0,
+          waitingUsers: (q.queueLength ?? q.currentUsers?.length ?? q.waitingUsers ?? 0),
+          averageWaitTime: (q.stats?.averageWaitTime ?? q.settings?.estimatedWaitTime ?? q.averageWaitTime ?? 0),
           servedToday: q.servedToday || 0,
           lastUpdated: q.updatedAt ? new Date(q.updatedAt).toLocaleTimeString() : '—',
         }));
@@ -249,7 +251,7 @@ export default function Dashboard() {
                   <h2 className="text-xl font-semibold text-white">Queue Management</h2>
                   <p className="text-sm text-gray-400 mt-1">Monitor and control all active queues</p>
                 </div>
-                <button className="px-4 py-2 rounded-lg bg-gradient-to-r from-blue-600 to-blue-500 text-white text-sm font-medium hover:from-blue-500 hover:to-blue-400 transition-all duration-200 flex items-center gap-2">
+                <button onClick={() => router.push('/dashboard/queues/new')} className="px-4 py-2 rounded-lg bg-gradient-to-r from-blue-600 to-blue-500 text-white text-sm font-medium hover:from-blue-500 hover:to-blue-400 transition-all duration-200 flex items-center gap-2">
                   <Plus className="w-4 h-4" />
                   New Queue
                 </button>

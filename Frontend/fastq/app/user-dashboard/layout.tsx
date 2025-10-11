@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Clock, LayoutDashboard, List, BarChart3, CalendarDays, Settings, Menu, RefreshCcw, Bell, LogOut } from 'lucide-react';
+import { Clock, LayoutDashboard, List, BarChart3, CalendarDays, Settings, Menu, RefreshCcw, Bell, LogOut, Brain } from 'lucide-react';
 import { AnimatedJoinButton } from '@/components/ui/animated-join-button';
 import { FloatingJoinButton } from '@/components/floating-join-button';
 
@@ -23,6 +23,7 @@ export default function UserDashboardLayout({ children }: { children: React.Reac
 
   const sidebarItems = [
     { icon: LayoutDashboard, label: 'Dashboard', href: '/user-dashboard' },
+    { icon: Brain, label: 'Smart Insights', href: '/user-dashboard/insights' },
     { icon: List, label: 'My Queues', href: '/user-dashboard/my-queues' },
     { icon: BarChart3, label: 'Analytics', href: '/user-dashboard/analytics' },
     { icon: CalendarDays, label: 'History', href: '/user-dashboard/history' },

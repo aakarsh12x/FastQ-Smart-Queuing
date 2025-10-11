@@ -1,9 +1,17 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { Bell, Shield, User, Globe, Smartphone, Mail, Eye, EyeOff, Save, Trash2 } from 'lucide-react';
 
 export default function SettingsPage() {
+  const router = useRouter();
+  const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+  
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+  
   const [notifications, setNotifications] = useState({
     email: true,
     push: true,
@@ -19,11 +27,11 @@ export default function SettingsPage() {
   });
 
   const [profile, setProfile] = useState({
-    name: 'John Doe',
-    email: 'john.doe@example.com',
-    phone: '+1 (555) 123-4567',
+    name: '',
+    email: '',
+    phone: '',
     language: 'en',
-    timezone: 'America/New_York'
+    timezone: 'UTC'
   });
 
   const handleNotificationChange = (key: string, value: boolean) => {
@@ -38,9 +46,144 @@ export default function SettingsPage() {
     setProfile(prev => ({ ...prev, [key]: value }));
   };
 
+  // Fetch user profile on component mount
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+        
+        if (!token) {
+          router.push('/');
+          return;
+        }
+
+        const res = await fetch(`${API_URL}/users/profile`, {
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        
+        const data = await res.json();
+        if (!res.ok || !data.success) {
+          if (res.status === 401) {
+            router.push('/');
+            return;
+          }
+          throw new Error(data.error || 'Failed to fetch profile');
+        }
+        
+        const userProfile = data.data;
+        setProfile({
+          name: userProfile.name || '',
+          email: userProfile.email || '',
+          phone: userProfile.phone || '',
+          language: userProfile.preferences?.language || 'en',
+          timezone: userProfile.preferences?.timezone || 'UTC'
+        });
+        
+        // Set notification preferences
+        if (userProfile.preferences?.notifications) {
+          setNotifications({
+            email: userProfile.preferences.notifications.email ?? true,
+            push: userProfile.preferences.notifications.push ?? true,
+            sms: userProfile.preferences.notifications.sms ?? false,
+            queueUpdates: true, // Default value
+            promotions: false // Default value
+          });
+        }
+        
+      } catch (err: any) {
+        console.error('Error fetching profile:', err);
+        setError(err.message || 'Failed to load profile');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProfile();
+  }, [API_URL, router]);
+
+  // Save profile changes
+  const handleSaveChanges = async () => {
+    try {
+      setSaving(true);
+      setError(null);
+      const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+      
+      if (!token) {
+        router.push('/');
+        return;
+      }
+
+      const updateData = {
+        name: profile.name,
+        phone: profile.phone,
+        preferences: {
+          language: profile.language,
+          timezone: profile.timezone,
+          notifications: {
+            email: notifications.email,
+            push: notifications.push,
+            sms: notifications.sms
+          }
+        }
+      };
+
+      const res = await fetch(`${API_URL}/users/profile`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(updateData),
+      });
+      
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        if (res.status === 401) {
+          router.push('/');
+          return;
+        }
+        throw new Error(data.error || 'Failed to update profile');
+      }
+      
+      // Show success message (you could add a toast notification here)
+      console.log('Profile updated successfully');
+      
+    } catch (err: any) {
+      console.error('Error updating profile:', err);
+      setError(err.message || 'Failed to update profile');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <h1 className="text-2xl font-bold text-gray-100">Settings</h1>
+        <div className="flex items-center justify-center py-12">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-400 mx-auto mb-4"></div>
+            <p className="text-gray-400">Loading profile...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <h1 className="text-2xl font-bold text-gray-100">Settings</h1>
+      
+      {error && (
+        <div className="bg-red-900/20 border border-red-500/30 rounded-lg p-4">
+          <p className="text-red-400">{error}</p>
+        </div>
+      )}
 
       {/* Profile Settings */}
       <div className="bg-gray-800/50 backdrop-blur-sm rounded-xl p-6 border border-gray-700/50">
@@ -66,9 +209,10 @@ export default function SettingsPage() {
             <input
               type="email"
               value={profile.email}
-              onChange={(e) => handleProfileChange('email', e.target.value)}
-              className="w-full bg-gray-700/50 border border-gray-600 rounded-lg px-3 py-2 text-gray-100 focus:outline-none focus:ring-2 focus:ring-sky-500"
+              readOnly
+              className="w-full bg-gray-600/50 border border-gray-600 rounded-lg px-3 py-2 text-gray-400 cursor-not-allowed"
             />
+            <p className="text-xs text-gray-500 mt-1">Email cannot be changed</p>
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-300 mb-2">Phone Number</label>
@@ -285,10 +429,14 @@ export default function SettingsPage() {
       </div>
 
       {/* Save Button */}
-      <div className="flex justify-end">
-        <button className="bg-gradient-to-r from-sky-600 to-blue-600 text-white px-6 py-3 rounded-lg hover:from-sky-700 hover:to-blue-700 transition-all flex items-center space-x-2">
+      <div className="flex justify-center">
+        <button 
+          onClick={handleSaveChanges}
+          disabled={saving}
+          className="bg-gradient-to-r from-sky-600 to-blue-600 text-white px-6 py-3 rounded-lg hover:from-sky-700 hover:to-blue-700 transition-all flex items-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
+        >
           <Save className="w-4 h-4" />
-          <span>Save Changes</span>
+          <span>{saving ? 'Saving...' : 'Save Changes'}</span>
         </button>
       </div>
     </div>

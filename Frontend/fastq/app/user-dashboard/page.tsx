@@ -46,10 +46,13 @@ import {
   CheckCircle2,
   Navigation,
   ArrowUpRight,
-  TrendingDown
+  TrendingDown,
+  Brain,
+  Sparkles
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { QueueAnimation } from '@/components/ui/queue-animation';
+import { useRouter } from 'next/navigation';
 
 interface Queue {
   id: string;
@@ -72,92 +75,30 @@ interface UserStats {
   totalWaitTime: string;
 }
 
-const mockQueues: Queue[] = [
-  {
-    id: '1',
-    name: 'Main Canteen',
-    description: 'Fresh meals and daily specials',
-    category: 'Food',
-    currentUsers: 23,
-    estimatedWaitTime: '15 min',
-    status: 'active',
-    location: 'Building A - Level 1',
-    rating: 4.5
-  },
-  {
-    id: '2',
-    name: 'Medical Center',
-    description: 'General consultation and check-ups',
-    category: 'Medical',
-    currentUsers: 15,
-    estimatedWaitTime: '25 min',
-    status: 'active',
-    location: 'Health Block - Reception',
-    rating: 4.8
-  },
-  {
-    id: '3',
-    name: 'Admin Office',
-    description: 'Student services and documentation',
-    category: 'Administrative',
-    currentUsers: 8,
-    estimatedWaitTime: '18 min',
-    status: 'paused',
-    location: 'Block C - Ground Floor',
-    rating: 4.2
-  },
-  {
-    id: '4',
-    name: 'Library Help Desk',
-    description: 'Book reservations and research assistance',
-    category: 'Education',
-    currentUsers: 4,
-    estimatedWaitTime: '8 min',
-    status: 'active',
-    location: 'Central Library - Entrance',
-    rating: 4.7
-  },
-  {
-    id: '5',
-    name: 'Campus Store',
-    description: 'Stationery and supplies',
-    category: 'Retail',
-    currentUsers: 12,
-    estimatedWaitTime: '12 min',
-    status: 'active',
-    location: 'Student Center - Ground Floor',
-    rating: 4.3
-  },
-  {
-    id: '6',
-    name: 'Parking Services',
-    description: 'Parking permits and assistance',
-    category: 'Automotive',
-    currentUsers: 6,
-    estimatedWaitTime: '10 min',
-    status: 'active',
-    location: 'Parking Office - Level 1',
-    rating: 4.1
-  }
-];
+interface SmartRecommendation {
+  queueId: string;
+  name: string;
+  category: string;
+  location: string;
+  currentUsers: number;
+  estimatedWait: string;
+  estimatedWaitMinutes: number;
+  score: number;
+  isPeakHour: boolean;
+  recommendation: string;
+  confidence: string;
+}
 
-const mockUserStats: UserStats = {
-  queuesJoined: 42,
-  timeSaved: '3.2h',
-  avgRating: 4.8,
-  completionRate: 98,
-  currentStreak: 7,
-  totalWaitTime: '2.1h'
-};
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
 
 const getCategoryIcon = (category: string) => {
   switch (category.toLowerCase()) {
     case 'food': return <Utensils className="w-5 h-5" />;
     case 'medical': return <HeartPulse className="w-5 h-5" />;
-    case 'administrative': return <Briefcase className="w-5 h-5" />;
+    case 'admin': return <Briefcase className="w-5 h-5" />;
     case 'education': return <GraduationCap className="w-5 h-5" />;
-    case 'retail': return <ShoppingBag className="w-5 h-5" />;
-    case 'travel': return <Plane className="w-5 h-5" />;
+    case 'shopping': return <ShoppingBag className="w-5 h-5" />;
+    case 'transport': return <Plane className="w-5 h-5" />;
     case 'automotive': return <Car className="w-5 h-5" />;
     case 'home': return <Home className="w-5 h-5" />;
     default: return <Info className="w-5 h-5" />;
@@ -174,25 +115,127 @@ const getStatusColor = (status: string) => {
 };
 
 export default function UserDashboard() {
+  const router = useRouter();
   const [sidebarOpen] = useState(false);
   const [joinedQueue, setJoinedQueue] = useState<Queue | null>(null);
-  const [queues, setQueues] = useState<Queue[]>(mockQueues);
+  const [queues, setQueues] = useState<Queue[]>([]);
   const [category, setCategory] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [userPosition, setUserPosition] = useState<number | null>(null);
   const [estimatedWaitTime, setEstimatedWaitTime] = useState<string | null>(null);
-  const [userStats, setUserStats] = useState<UserStats>(mockUserStats);
-  const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+  const [userStats, setUserStats] = useState<UserStats>({
+    queuesJoined: 0,
+    timeSaved: '0m',
+    avgRating: 0,
+    completionRate: 0,
+    currentStreak: 0,
+    totalWaitTime: '0m'
+  });
+  const [smartRecommendations, setSmartRecommendations] = useState<SmartRecommendation[]>([]);
 
   useEffect(() => {
-    // Simulate finding a joined queue
-    const joined = queues.find(q => q.id === '1');
-    if (joined) {
-      setJoinedQueue(joined);
-      setUserPosition(5);
-      setEstimatedWaitTime('15 min');
+    // Auth guard
+    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+    const role = typeof window !== 'undefined' ? localStorage.getItem('role') : null;
+    if (!token || role !== 'user') {
+      router.push('/');
+      return;
     }
-  }, [queues]);
+
+    const load = async () => {
+      try {
+        // Load available queues
+        const resQueues = await fetch(`${API_URL}/queues?status=active`, {
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`
+          }
+        });
+        const dataQueues = await resQueues.json();
+        if (resQueues.ok && dataQueues.success) {
+          const mapped: Queue[] = (dataQueues.data || []).map((q: any) => ({
+            id: q._id,
+            name: q.name,
+            description: q.description || '',
+            category: (q.category || 'other').toString(),
+            currentUsers: q.queueLength ?? (q.currentUsers?.length || 0),
+            estimatedWaitTime: `${(q.settings?.estimatedWaitTime ?? q.stats?.averageWaitTime ?? 5)} min`,
+            status: (q.status || 'active') as 'active' | 'paused' | 'closed',
+            location: q.location || '—',
+            rating: q.rating?.average ?? 0
+          }));
+          setQueues(mapped);
+        }
+
+        // Load my current queues (if any)
+        const resMy = await fetch(`${API_URL}/users/my-queues`, {
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`
+          }
+        });
+        const dataMy = await resMy.json();
+        if (resMy.ok && dataMy.success && Array.isArray(dataMy.data) && dataMy.data.length > 0) {
+          const q = dataMy.data[0];
+          const mappedJoined: Queue = {
+            id: q._id,
+            name: q.name,
+            description: q.description || '',
+            category: (q.category || 'other').toString(),
+            currentUsers: q.queueLength ?? (q.currentUsers?.length || 0),
+            estimatedWaitTime: `${q.estimatedWaitTime ?? q.settings?.estimatedWaitTime ?? 5} min`,
+            status: (q.status || 'active'),
+            location: q.location || '—',
+            rating: q.rating?.average ?? 0
+          } as Queue;
+          setJoinedQueue(mappedJoined);
+          setUserPosition(q.userPosition ?? 1);
+          setEstimatedWaitTime(`${q.estimatedWaitTime ?? q.settings?.estimatedWaitTime ?? 5} min`);
+        } else {
+          setJoinedQueue(null);
+          setUserPosition(null);
+          setEstimatedWaitTime(null);
+        }
+
+        // Load user stats (optional)
+        const resStats = await fetch(`${API_URL}/users/stats`, {
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`
+          }
+        });
+        const dataStats = await resStats.json().catch(() => ({}));
+        if (resStats.ok && dataStats.success) {
+          const s = dataStats.data;
+          setUserStats({
+            queuesJoined: s.queuesJoined ?? 0,
+            timeSaved: `${s.timeSaved ?? 0}m`,
+            avgRating: s.averageWaitTime ?? 0,
+            completionRate: 0,
+            currentStreak: 0,
+            totalWaitTime: `${s.totalWaitTime ?? 0}m`
+          });
+        }
+
+        // Load smart recommendations
+        const resRecs = await fetch(`${API_URL}/smart/recommendations?limit=3`, {
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`
+          }
+        });
+        const dataRecs = await resRecs.json();
+        if (resRecs.ok && dataRecs.success) {
+          setSmartRecommendations(dataRecs.data || []);
+        }
+      } catch (e) {
+        // non-fatal for UI
+        console.warn('Failed to load dashboard data', e);
+      }
+    };
+
+    load();
+  }, []);
 
   const filteredQueues = queues.filter(queue => {
     const matchesCategory = category === 'all' || queue.category.toLowerCase() === category;
@@ -210,8 +253,8 @@ export default function UserDashboard() {
   };
 
   const handleRefresh = () => {
-    // Simulate refresh
-    console.log('Refreshing data...');
+    // No-op placeholder; could re-trigger load effect
+    window.location.reload();
   };
 
   async function joinQueue(queueId: string) {
@@ -298,10 +341,13 @@ export default function UserDashboard() {
 
               {/* Interactive Queue Animation */}
               <QueueAnimation
-                userPosition={userPosition || 1}
-                totalPeople={joinedQueue.currentUsers || 1}
-                estimatedWaitTime={estimatedWaitTime || '5 min'}
-                queueName={joinedQueue.name}
+                queues={[{
+                  queueId: joinedQueue.id,
+                  userPosition: userPosition || 1,
+                  totalPeople: joinedQueue.currentUsers || 1,
+                  estimatedWaitTime: estimatedWaitTime || '5 min',
+                  queueName: joinedQueue.name
+                }]}
               />
             </motion.div>
           ) : (
@@ -322,94 +368,140 @@ export default function UserDashboard() {
 
           {/* Stats Cards */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.1 }}
-              className="group relative overflow-hidden rounded-xl border border-gray-800/50 bg-gradient-to-br from-gray-900/50 to-gray-900/30 backdrop-blur-xl p-6 hover:border-gray-700/50 transition-all duration-300"
-            >
-              <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-              <div className="relative z-10">
-                <div className="flex items-center justify-between mb-3">
-                  <div className="p-2 rounded-lg bg-blue-500/10">
-                    <List className="w-4 h-4 text-blue-400" />
-                  </div>
-                  <ArrowUpRight className="w-4 h-4 text-emerald-400" />
+            <div className="rounded-xl border border-gray-800/50 bg-gray-900/50 backdrop-blur-sm p-6">
+              <div className="flex items-center justify-between mb-3">
+                <div className="p-2 rounded-lg bg-blue-500/10">
+                  <List className="w-4 h-4 text-blue-400" />
                 </div>
-                <div className="space-y-1">
-                  <p className="text-sm text-gray-400 font-medium">Queues Joined</p>
-                  <p className="text-3xl font-semibold text-white">{userStats.queuesJoined}</p>
-                  <p className="text-xs text-emerald-400">+5% from last month</p>
-                </div>
+                <ArrowUpRight className="w-4 h-4 text-emerald-400" />
               </div>
-            </motion.div>
+              <div className="space-y-1">
+                <p className="text-sm text-gray-400 font-medium">Queues Joined</p>
+                <p className="text-3xl font-semibold text-white">{userStats.queuesJoined}</p>
+                <p className="text-xs text-emerald-400">+5% from last month</p>
+              </div>
+            </div>
 
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2 }}
-              className="group relative overflow-hidden rounded-xl border border-gray-800/50 bg-gradient-to-br from-gray-900/50 to-gray-900/30 backdrop-blur-xl p-6 hover:border-gray-700/50 transition-all duration-300"
-            >
-              <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-              <div className="relative z-10">
-                <div className="flex items-center justify-between mb-3">
-                  <div className="p-2 rounded-lg bg-emerald-500/10">
-                    <Zap className="w-4 h-4 text-emerald-400" />
-                  </div>
-                  <ArrowUpRight className="w-4 h-4 text-emerald-400" />
+            <div className="rounded-xl border border-gray-800/50 bg-gray-900/50 backdrop-blur-sm p-6">
+              <div className="flex items-center justify-between mb-3">
+                <div className="p-2 rounded-lg bg-emerald-500/10">
+                  <Zap className="w-4 h-4 text-emerald-400" />
                 </div>
-                <div className="space-y-1">
-                  <p className="text-sm text-gray-400 font-medium">Time Saved</p>
-                  <p className="text-3xl font-semibold text-white">{userStats.timeSaved}</p>
-                  <p className="text-xs text-emerald-400">+12% from last month</p>
-                </div>
+                <ArrowUpRight className="w-4 h-4 text-emerald-400" />
               </div>
-            </motion.div>
+              <div className="space-y-1">
+                <p className="text-sm text-gray-400 font-medium">Time Saved</p>
+                <p className="text-3xl font-semibold text-white">{userStats.timeSaved}</p>
+                <p className="text-xs text-emerald-400">+12% from last month</p>
+              </div>
+            </div>
 
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.3 }}
-              className="group relative overflow-hidden rounded-xl border border-gray-800/50 bg-gradient-to-br from-gray-900/50 to-gray-900/30 backdrop-blur-xl p-6 hover:border-gray-700/50 transition-all duration-300"
-            >
-              <div className="absolute inset-0 bg-gradient-to-br from-amber-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-              <div className="relative z-10">
-                <div className="flex items-center justify-between mb-3">
-                  <div className="p-2 rounded-lg bg-amber-500/10">
-                    <Star className="w-4 h-4 text-amber-400" />
-                  </div>
-                  <ArrowUpRight className="w-4 h-4 text-emerald-400" />
+            <div className="rounded-xl border border-gray-800/50 bg-gray-900/50 backdrop-blur-sm p-6">
+              <div className="flex items-center justify-between mb-3">
+                <div className="p-2 rounded-lg bg-amber-500/10">
+                  <Star className="w-4 h-4 text-amber-400" />
                 </div>
-                <div className="space-y-1">
-                  <p className="text-sm text-gray-400 font-medium">Avg Rating</p>
-                  <p className="text-3xl font-semibold text-white">{userStats.avgRating}</p>
-                  <p className="text-xs text-emerald-400">+0.2 from last month</p>
-                </div>
+                <ArrowUpRight className="w-4 h-4 text-emerald-400" />
               </div>
-            </motion.div>
+              <div className="space-y-1">
+                <p className="text-sm text-gray-400 font-medium">Avg Rating</p>
+                <p className="text-3xl font-semibold text-white">{userStats.avgRating}</p>
+                <p className="text-xs text-emerald-400">+0.2 from last month</p>
+              </div>
+            </div>
 
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.4 }}
-              className="group relative overflow-hidden rounded-xl border border-gray-800/50 bg-gradient-to-br from-gray-900/50 to-gray-900/30 backdrop-blur-xl p-6 hover:border-gray-700/50 transition-all duration-300"
-            >
-              <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-              <div className="relative z-10">
-                <div className="flex items-center justify-between mb-3">
-                  <div className="p-2 rounded-lg bg-purple-500/10">
-                    <Target className="w-4 h-4 text-purple-400" />
-                  </div>
-                  <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+            <div className="rounded-xl border border-gray-800/50 bg-gray-900/50 backdrop-blur-sm p-6">
+              <div className="flex items-center justify-between mb-3">
+                <div className="p-2 rounded-lg bg-purple-500/10">
+                  <Target className="w-4 h-4 text-purple-400" />
                 </div>
-                <div className="space-y-1">
-                  <p className="text-sm text-gray-400 font-medium">Current Streak</p>
-                  <p className="text-3xl font-semibold text-white">{userStats.currentStreak}</p>
-                  <p className="text-xs text-gray-500">days in a row</p>
-                </div>
+                <div className="w-2 h-2 rounded-full bg-emerald-400" />
               </div>
-            </motion.div>
+              <div className="space-y-1">
+                <p className="text-sm text-gray-400 font-medium">Current Streak</p>
+                <p className="text-3xl font-semibold text-white">{userStats.currentStreak}</p>
+                <p className="text-xs text-gray-500">days in a row</p>
+              </div>
+            </div>
           </div>
+
+          {/* Smart Recommendations */}
+          {smartRecommendations.length > 0 && (
+            <div className="rounded-xl border border-blue-500/30 bg-gray-900/50 backdrop-blur-sm p-6">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-lg bg-blue-500/20 border border-blue-500/30">
+                    <Brain className="w-5 h-5 text-blue-400" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-semibold text-white flex items-center gap-2">
+                      Smart Recommendations
+                      <Sparkles className="w-4 h-4 text-yellow-400" />
+                    </h3>
+                    <p className="text-sm text-gray-400">AI-powered queue suggestions for you</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => router.push('/user-dashboard/insights')}
+                  className="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium transition-colors flex items-center gap-2"
+                >
+                  View All
+                  <ArrowRight className="w-4 h-4" />
+                </button>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {smartRecommendations.map((rec) => (
+                  <div
+                    key={rec.queueId}
+                    className="relative bg-gray-800/50 rounded-lg p-4 border border-gray-700/50 hover:border-blue-500/50 transition-colors cursor-pointer"
+                    onClick={() => handleJoinQueue(rec.queueId)}
+                  >
+                    {/* Score badge */}
+                    <div className="absolute top-3 right-3">
+                      <div className={`px-2 py-1 rounded-full text-xs font-bold ${
+                        rec.score >= 80 ? 'bg-emerald-500/20 text-emerald-400' :
+                        rec.score >= 60 ? 'bg-yellow-500/20 text-yellow-400' :
+                        'bg-orange-500/20 text-orange-400'
+                      }`}>
+                        {rec.score}
+                      </div>
+                    </div>
+
+                    <div className="mb-3">
+                      <h4 className="text-white font-semibold mb-1 pr-12">{rec.name}</h4>
+                      <p className="text-xs text-gray-400 flex items-center gap-1">
+                        <MapPin className="w-3 h-3" />
+                        {rec.location}
+                      </p>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-2 mb-3">
+                      <div className="bg-gray-900/50 rounded p-2 text-center">
+                        <Users className="w-3 h-3 mx-auto mb-1 text-blue-400" />
+                        <p className="text-xs text-gray-400">Queue</p>
+                        <p className="text-sm font-semibold text-white">{rec.currentUsers}</p>
+                      </div>
+                      <div className="bg-gray-900/50 rounded p-2 text-center">
+                        <Timer className="w-3 h-3 mx-auto mb-1 text-blue-400" />
+                        <p className="text-xs text-gray-400">Wait</p>
+                        <p className="text-sm font-semibold text-white">{rec.estimatedWait}</p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-start gap-2 bg-gray-900/50 rounded p-2">
+                      {rec.isPeakHour ? (
+                        <AlertCircle className="w-3 h-3 text-orange-400 flex-shrink-0 mt-0.5" />
+                      ) : (
+                        <Star className="w-3 h-3 text-yellow-400 flex-shrink-0 mt-0.5" />
+                      )}
+                      <p className="text-xs text-gray-300 line-clamp-2">{rec.recommendation}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Queue Categories */}
           <div className="flex flex-wrap gap-2">

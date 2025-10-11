@@ -13,6 +13,7 @@ const userRoutes = require('./routes/users');
 const queueRoutes = require('./routes/queues');
 const adminRoutes = require('./routes/admin');
 const analyticsRoutes = require('./routes/analytics');
+const smartRoutes = require('./routes/smart');
 
 // Import middleware
 const { authenticateToken } = require('./middleware/auth');
@@ -37,14 +38,25 @@ const limiter = rateLimit({
 });
 
 // Middleware
-app.use(helmet());
+app.use(helmet({
+  crossOriginResourcePolicy: { policy: "cross-origin" }
+}));
 app.use(limiter);
 app.use(cors({
   origin: process.env.FRONTEND_URL || "http://localhost:3000",
-  credentials: true
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+  preflightContinue: false,
+  optionsSuccessStatus: 200
 }));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
+
+// Test endpoint for CORS
+app.get('/api/test', (req, res) => {
+  res.json({ message: 'CORS is working!', timestamp: new Date().toISOString() });
+});
 
 // Database connection
 const connectDB = async () => {
@@ -89,6 +101,7 @@ app.use('/api/users', authenticateToken, userRoutes);
 app.use('/api/queues', authenticateToken, queueRoutes);
 app.use('/api/admin', authenticateToken, adminRoutes);
 app.use('/api/analytics', authenticateToken, analyticsRoutes);
+app.use('/api/smart', authenticateToken, smartRoutes);
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
