@@ -20,6 +20,14 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     }
   }, [router]);
 
+  const handleLogout = () => {
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('token');
+      localStorage.removeItem('role');
+    }
+    router.push('/');
+  };
+
   const sidebarItems = [
     { icon: LayoutDashboard, label: 'Overview', href: '/dashboard' },
     { icon: List, label: 'Queues', href: '/dashboard/queues' },
@@ -72,7 +80,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               <p className="text-sm font-medium text-gray-100">Admin User</p>
               <p className="text-xs text-gray-500">Administrator</p>
             </div>
-            <button className="p-2 text-gray-400 hover:text-gray-200">
+            <button 
+              onClick={handleLogout}
+              className="p-2 text-gray-400 hover:text-gray-200 transition-colors"
+              title="Logout"
+            >
               <LogOut className="w-4 h-4" />
             </button>
           </div>
