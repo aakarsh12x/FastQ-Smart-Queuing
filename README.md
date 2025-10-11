@@ -1,4 +1,5 @@
 # FastQ - Smart Queue Management System 🚀
+Live Link - https://fastq-ichy73kkw-aakarsh12xs-projects.vercel.app/
 <img width="1896" height="893" alt="image" src="https://github.com/user-attachments/assets/c5d2539e-a70c-4aac-a0ae-67f8809beabc" />
 
 <img width="1897" height="911" alt="image" src="https://github.com/user-attachments/assets/fd1c25a3-7e92-4393-a44c-b8108ca62dc0" />
