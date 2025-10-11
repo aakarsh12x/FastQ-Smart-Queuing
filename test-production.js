@@ -6,8 +6,8 @@
 const https = require('https');
 const http = require('http');
 
-const BACKEND_URL = 'https://fastq-backend.onrender.com';
-const FRONTEND_URL = 'https://fastq-6c406c7r0-aakarsh12xs-projects.vercel.app';
+const BACKEND_URL = 'https://fastq-smart-queuing-2.onrender.com';
+const FRONTEND_URL = 'https://fastq-i93fjdrv5-aakarsh12xs-projects.vercel.app';
 
 // Color codes for console output
 const colors = {
