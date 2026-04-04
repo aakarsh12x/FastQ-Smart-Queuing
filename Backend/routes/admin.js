@@ -15,6 +15,7 @@ router.get('/dashboard', requireAdmin, async (req, res) => {
     const adminId = req.user._id;
 
     // Get admin's queues
+
     const queues = await Queue.find({ admin: adminId })
       .populate('currentUsers.user', 'name email')
       .sort({ createdAt: -1 });
@@ -112,6 +113,7 @@ router.get('/queues', requireAdmin, async (req, res) => {
   } catch (error) {
     console.error('Get admin queues error:', error);
     res.status(500).json({ 
+      
       success: false, 
       error: 'Server error while fetching queues' 
     });
