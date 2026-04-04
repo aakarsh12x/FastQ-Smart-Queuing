@@ -126,7 +126,108 @@ Frontend/fastq/
 Backend: Railway / Render  
 Frontend: Vercel  
 
-## Author
+### Queue Endpoints
+```
+GET    /api/queues              - Get all queues
+GET    /api/queues/:id          - Get queue details
+POST   /api/queues              - Create queue (Admin)
+PUT    /api/queues/:id          - Update queue (Admin)
+DELETE /api/queues/:id          - Delete queue (Admin)
+POST   /api/queues/:id/join     - Join a queue
+POST   /api/queues/:id/leave    - Leave a queue
+GET    /api/queues/:id/position - Get user position
+```
 
-Aakarsh Shrey  
-https://github.com/aakarsh12x  
+### User Endpoints
+```
+GET  /api/users/profile    - Get user profile
+PUT  /api/users/profile    - Update user profile
+```
+
+### Admin Endpoints
+```
+GET  /api/admin/dashboard  - Get admin dashboard stats
+POST /api/admin/serve-next - Serve next user in queue
+```
+
+## 🔐 Environment Variables
+
+### Backend (.env)
+| Variable | Description | Example |
+|----------|-------------|---------|
+| `PORT` | Server port | `5000` |
+| `MONGODB_URI` | MongoDB connection string | `mongodb+srv://...` |
+| `JWT_SECRET` | JWT signing secret | `your_secret_key` |
+| `JWT_EXPIRE` | JWT expiration time | `7d` |
+| `FRONTEND_URL` | Frontend URL for CORS | `http://localhost:3000` |
+
+### Frontend (.env.local)
+| Variable | Description | Example |
+|----------|-------------|---------|
+| `NEXT_PUBLIC_API_URL` | Backend API URL | `http://localhost:5000/api` |
+
+## 🧪 Testing
+
+### Backend Tests
+```bash
+cd Backend
+npm test
+```
+
+### Run Manual Tests
+```bash
+node test-backend.js
+```
+
+## 📦 Deployment
+
+### Backend Deployment (Recommended: Railway/Render/Heroku)
+1. Set environment variables on your hosting platform
+2. Deploy the Backend folder
+3. Update `MONGODB_URI` to use Atlas
+4. Set `NODE_ENV=production`
+
+### Frontend Deployment (Recommended: Vercel)
+1. Connect your GitHub repo to Vercel
+2. Set root directory to `Frontend/fastq`
+3. Add environment variable `NEXT_PUBLIC_API_URL`
+4. Deploy!
+
+## 🤝 Contributing
+
+Contributions are welcome! Please follow these steps:
+
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
+
+## 📄 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## 👨‍💻 Author
+
+**Aakarsh Shrey**
+- GitHub: [@aakarsh12x](https://github.com/aakarsh12x)
+
+### 🤝 Contributors
+- **Whirphool** - Co-author for pair programming session
+
+## 🙏 Acknowledgments
+
+- [Next.js](https://nextjs.org/) - React framework
+- [Tailwind CSS](https://tailwindcss.com/) - CSS framework
+- [Shadcn/ui](https://ui.shadcn.com/) - UI component library
+- [Aceternity UI](https://ui.aceternity.com/) - Beautiful UI components
+- [MongoDB](https://www.mongodb.com/) - Database
+- [Socket.IO](https://socket.io/) - Real-time communication
+
+---
+
+<div align="center">
+Made with ❤️ by Aakarsh Shrey
+
+⭐ Star this repository if you find it helpful!
+</div>
