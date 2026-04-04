@@ -12,7 +12,7 @@ Live: https://fastq-ichy73kkw-aakarsh12xs-projects.vercel.app/
 FastQ is a real-time queue management system for canteens, hospitals, offices, and similar environments. It allows users to join queues remotely and track their position while giving admins full control and analytics.
 
 ## Features
-
+ 
 ### Users
 - Join queues remotely  
 - Track real-time position  
