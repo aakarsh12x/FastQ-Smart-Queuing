@@ -231,3 +231,44 @@ Made with ❤️ by Aakarsh Shrey
 
 ⭐ Star this repository if you find it helpful!
 </div>
+
+
+---
+
+## 
+
+---
+
+## System Design
+
+```mermaid
+graph TB
+    subgraph Client["Client Layer (Next.js 15 + TypeScript)"]
+        USER_UI[User Dashboard\nQueue Position & Wait Time]
+        ADMIN_UI[Admin Dashboard\nQueue Management & Analytics]
+    end
+
+    subgraph API["Backend (Node.js + Express.js)"]
+        AUTH[Auth Service\nJWT + bcrypt]
+        QCTRL[Queue Controller\nFCFS Processing]
+        NOTIF[Notification Engine]
+    end
+
+    subgraph Realtime["Real-time Layer"]
+        SOCK[Socket.IO Server\nLive Queue Broadcasts]
+    end
+
+    subgraph DB["Data Layer"]
+        MONGO[(MongoDB Atlas\nQueue & User Data)]
+    end
+
+    USER_UI -->|Join Queue / View Status| AUTH
+    ADMIN_UI -->|Manage Queue| AUTH
+    AUTH -->|Authorized| QCTRL
+    QCTRL -->|Read/Write Queues| MONGO
+    QCTRL -->|Trigger Events| NOTIF
+    NOTIF -->|Emit to Room| SOCK
+    SOCK <-->|WebSocket Connection| USER_UI
+    SOCK <-->|WebSocket Connection| ADMIN_UI
+    MONGO -->|Queue State| QCTRL
+```
